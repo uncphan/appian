@@ -19,6 +19,10 @@ public class FireDispatchImpl implements FireDispatch {
     this.city = city;
   }
 
+  /**
+   * @inheritDoc
+   * sets the fire fighters and puts them at the fire station
+   */
   @Override
   public void setFirefighters(int numFirefighters) {
     ArrayList<Firefighter> fireFighters = new ArrayList<Firefighter>(numFirefighters);
@@ -29,34 +33,54 @@ public class FireDispatchImpl implements FireDispatch {
     this.fireFighters = fireFighters;
   }
 
+  /**
+   * @inheritDoc
+   */
   @Override
   public List<Firefighter> getFirefighters() {
     return this.fireFighters;
   }
 
+  /**
+   * @inheritDoc
+   */
   @Override
   public void dispatchFirefighers(CityNode... burningBuildings) {
-    for (CityNode building : burningBuildings) {
-    	FirefighterImpl fighter = getClosestFireFighter(building);
-    	fighter.setLocation(building);
-    	Building b = city.getBuilding(building);
-    	try {
-			b.extinguishFire();
-		} catch (NoFireFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
+	if (burningBuildings != null && city != null) {
+	    for (CityNode node : burningBuildings) {
+	    	Building b = city.getBuilding(node);
+	    	//don't do this if you don't need to put out a fire
+	    	if (b != null && b.isBurning() && !b.isFireproof()) {
+		    	FirefighterImpl fighter = getClosestFireFighter(node);
+		    	fighter.setLocation(node);
+		    	try {
+					b.extinguishFire();
+				} catch (NoFireFoundException e) {
+					CityNode location = b.getLocation();
+					if (location != null) {
+						System.out.println("No fire found for building at coordinates: "+location.getX() +" , "+location.getY());
+					}
+					e.printStackTrace();
+				}
+	    	}
+	    }
+	}
   }
 
+  /**
+   * Get the closest fire fighter to a given building
+   * @param building
+   * @return the closest fire fighter
+   */
   private FirefighterImpl getClosestFireFighter(CityNode building) {
 	FirefighterImpl closestFighter = (FirefighterImpl) getFirefighters().get(0);
 	int closestDistance = closestFighter.calculateDistance(building);
 	for (Firefighter f : getFirefighters()) {
-		int currentDistance = ((FirefighterImpl)f).calculateDistance(building);
+		FirefighterImpl currentFighter = (FirefighterImpl) f;
+		int currentDistance = currentFighter.calculateDistance(building);
 		if (currentDistance<closestDistance) {
 			closestDistance = currentDistance;
-			closestFighter = (FirefighterImpl) f;
+			closestFighter = currentFighter;
 		}
 	}
 	return closestFighter;
